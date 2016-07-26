@@ -11,7 +11,7 @@ TSS_VER_MINOR=3
 
 # compute $target
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE([foreign 1.6])
+AM_INIT_AUTOMAKE([foreign subdir-objects 1.6])
 
 # Debugging support
 AC_ARG_ENABLE([debug],
