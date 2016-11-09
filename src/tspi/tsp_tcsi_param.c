@@ -14,7 +14,7 @@
 
 
 #ifndef __APPLE__
-#include <bits/local_lim.h>
+#include <limits.h>
 #else
 #define HOST_NAME_MAX 64
 #endif

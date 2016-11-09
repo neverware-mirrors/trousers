@@ -79,8 +79,11 @@ Tspi_Context_Connect(TSS_HCONTEXT tspContext,	/* in */
 			return result;
 
 		if ((result = RPC_OpenContext(tspContext, machine_name,
-					      CONNECTION_TYPE_TCP_PERSISTANT)))
+					      CONNECTION_TYPE_TCP_PERSISTANT))) {
+			free(machine_name);
 			return result;
+		}
+
 	} else {
 		if ((machine_name =
 		    Trspi_UNICODE_To_Native((BYTE *)wszDestination, NULL)) == NULL) {
@@ -89,15 +92,20 @@ Tspi_Context_Connect(TSS_HCONTEXT tspContext,	/* in */
 		}
 
 		if ((result = RPC_OpenContext(tspContext, machine_name,
-					      CONNECTION_TYPE_TCP_PERSISTANT)))
+					      CONNECTION_TYPE_TCP_PERSISTANT))) {
+			free(machine_name);
 			return result;
+		}
 
 		if ((result = obj_context_set_machine_name(tspContext, machine_name,
-						strlen((char *)machine_name)+1)))
+						strlen((char *)machine_name)+1))) {
+			free(machine_name);
 			return result;
+		}
 
-        free(machine_name);
 	}
+
+	free(machine_name);
 
         if ((obj_tpm_add(tspContext, &hTpm)))
                 return TSPERR(TSS_E_INTERNAL_ERROR);

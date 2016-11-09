@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 	int i, length, rv;
 	bi_ptr random = NULL;
 	TSS_BOOL isCorrect;
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 	TSS_HKEY hKEY;
 
 	init_tss_version( &signData);
@@ -153,17 +153,19 @@ int main(int argc, char *argv[]) {
 
 	create_TSS_DAA_SELECTED_ATTRIB( &revealAttributes, 5, 0, 1, 1, 0, 0);
 
+	mdctx = EVP_MD_CTX_create();
+
 	// create the TSS_DAA_SIGN_DATA struct
 	// .selector: 0 -> payload contains a handle to an AIK
 	//            1 -> payload contains a hashed message
 	if( message != NULL) {
 		signData.selector = TSS_FLAG_DAA_SIGN_MESSAGE_HASH;
 		signData.payloadFlag = TSS_FLAG_DAA_SIGN_MESSAGE_HASH;
-		EVP_DigestInit(&mdctx, DAA_PARAM_get_message_digest());
-		EVP_DigestUpdate(&mdctx,  (BYTE *)message, strlen( message));
-		signData.payloadLength = EVP_MD_CTX_size(&mdctx);
-		signData.payload = (BYTE *)malloc( EVP_MD_CTX_size(&mdctx));
-		EVP_DigestFinal(&mdctx, signData.payload, NULL);
+		EVP_DigestInit(mdctx, DAA_PARAM_get_message_digest());
+		EVP_DigestUpdate(mdctx,  (BYTE *)message, strlen( message));
+		signData.payloadLength = EVP_MD_CTX_size(mdctx);
+		signData.payload = (BYTE *)EVP_MD_CTX_create();
+		EVP_DigestFinal(mdctx, signData.payload, NULL);
 	} else {
 		signData.selector = TSS_FLAG_DAA_SIGN_IDENTITY_KEY;
 		result = Tspi_Context_CreateObject(
@@ -221,6 +223,7 @@ int main(int argc, char *argv[]) {
 	printf("Signature correct:%s\n", ( isCorrect ? "yes" : "no"));
 
 out_close:
+	EVP_MD_CTX_destroy(mdctx);
 	if( attributes != NULL) {
 		for( i=0; i<(int)hDaaCredential->attributesLength; i++) {
 			if( attributes[i] != NULL) free( attributes[i]);

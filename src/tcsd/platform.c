@@ -113,7 +113,7 @@ MUTEX_DECLARE_INIT(utmp_lock);
 char
 platform_get_runlevel()
 {
-	char runlevel;
+	char runlevel = 'u';	/* unknown run level */
 	struct utmpx ut, *utp = NULL;
 
 	MUTEX_LOCK(utmp_lock);
