@@ -75,15 +75,15 @@ int sign( BYTE *buffer_2_sign,
 	BYTE *signature,
 	int *len_signature
 ) {
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *ctx;
 	int len_message = EVP_MD_size( EVP_sha1()), current_len_message;
 	BYTE *message = (BYTE *)malloc( len_message);
 	int ret;
 
-	EVP_MD_CTX_init(&ctx);
-	EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-	EVP_DigestUpdate(&ctx, buffer_2_sign, len_buffer_2_sign);
-	EVP_DigestFinal_ex(&ctx, message, &current_len_message);
+	ctx = EVP_MD_CTX_create();
+	EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+	EVP_DigestUpdate(ctx, buffer_2_sign, len_buffer_2_sign);
+	EVP_DigestFinal_ex(ctx, message, &current_len_message);
 	LogDebug("Sign rsa-> with message (length=%d)", current_len_message);
 //	int RSA_sign(int type, unsigned char *m, unsigned int m_len,
 //		     unsigned char *sigret, unsigned int *siglen, RSA *rsa);
@@ -92,7 +92,7 @@ int sign( BYTE *buffer_2_sign,
 		LogError("Error in RSA_sign: %s", ERR_error_string( ERR_get_error(), NULL));
 	}
 	LogDebug("Sign rsa-> signature (length=%d)", *len_signature );
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_MD_CTX_destroy(ctx);
 	free( message);
 	return ret;
 }
@@ -108,11 +108,11 @@ static int init_key_chain(int length_key_chain, Issuer *issuer) {
 	unsigned long e = 65537;
 	RSA *rsa;
 	bi_ptr bi;
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *ctx;
 	int len_message = EVP_MD_size( EVP_sha1());
 	int current_len_message;
 
-	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_create(ctx);
 	message = (BYTE *)malloc(len_message);
 	if( length_key_chain < 1) {
 		free( message);
@@ -141,9 +141,9 @@ static int init_key_chain(int length_key_chain, Issuer *issuer) {
 			bi_2_byte_array( modulus, DAA_PARAM_KEY_SIZE / 8, bi);
 			LogDebug("bi=%s", bi_2_hex_char( bi));
 			bi_free_ptr(  bi);
-			EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
-			EVP_DigestUpdate(&ctx, modulus, DAA_PARAM_KEY_SIZE / 8);
-			EVP_DigestFinal_ex(&ctx, message, &current_len_message);
+			EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+			EVP_DigestUpdate(ctx, modulus, DAA_PARAM_KEY_SIZE / 8);
+			EVP_DigestFinal_ex(ctx, message, &current_len_message);
 			ret = RSA_sign( NID_sha1, message, current_len_message,
 					signature, &len_sign, issuer->key_chain[i-1]);
 			if( ret == 0) {
@@ -165,13 +165,13 @@ static int init_key_chain(int length_key_chain, Issuer *issuer) {
 		}
 	}
 	free( message);
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_MD_CTX_destroy(ctx);
 	return 0;
 }
 
 Issuer* initIssuer(int length_key_chain, char *filename, char *exec, TSS_HCONTEXT hContext) {
 	FILE *file;
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 	Issuer *issuer = (Issuer *)malloc(sizeof( Issuer));
 	TPM_DAA_ISSUER *tpm_daa_issuer;
 	bi_ptr modulus_N0;
@@ -231,25 +231,25 @@ Issuer* initIssuer(int length_key_chain, char *filename, char *exec, TSS_HCONTEX
 		return NULL;
 	}
 
-	EVP_MD_CTX_init(&mdctx);
-	EVP_DigestInit_ex(&mdctx, DAA_PARAM_get_message_digest(), NULL);
+	EVP_MD_CTX_create(mdctx);
+	EVP_DigestInit_ex(mdctx, DAA_PARAM_get_message_digest(), NULL);
 	// digestN0 = hash( modulus_N0)
-	EVP_DigestUpdate(&mdctx,  modulus_N0_bytes, TPM_DAA_SIZE_issuerModulus);
-	digest_n0 = (BYTE *)malloc( EVP_MD_CTX_size(&mdctx));
-	EVP_DigestFinal_ex(&mdctx, digest_n0, NULL);
+	EVP_DigestUpdate(mdctx,  modulus_N0_bytes, TPM_DAA_SIZE_issuerModulus);
+	digest_n0 = (BYTE *)EVP_MD_CTX_create();
+	EVP_DigestFinal_ex(mdctx, digest_n0, NULL);
 	tpm_daa_issuer = convert2issuer_settings( issuer->pk);
 	issuer_settings_byte_array = issuer_2_byte_array( tpm_daa_issuer, &len_issuer_settings);
 	// data to sign: concatenation of digest_n0 and issuer_settings_byte_array
-	sign_data = (BYTE *)malloc( EVP_MD_CTX_size(&mdctx) + len_issuer_settings);
-	memcpy( sign_data, digest_n0, EVP_MD_CTX_size(&mdctx));
-	memcpy( &sign_data[EVP_MD_CTX_size(&mdctx)],
+	sign_data = (BYTE *)malloc( EVP_MD_CTX_size(mdctx) + len_issuer_settings);
+	memcpy( sign_data, digest_n0, EVP_MD_CTX_size(mdctx));
+	memcpy( &sign_data[EVP_MD_CTX_size(mdctx)],
 			issuer_settings_byte_array,
 			len_issuer_settings);
 	free( issuer_settings_byte_array);
 	// sign digest of TPM compatible Issuer key (sign_data)
 	private_nn = issuer->key_chain[issuer->length_key_chain - 1];
 	signature = (BYTE *)malloc( RSA_size(private_nn));
-	if ( sign( sign_data, EVP_MD_CTX_size(&mdctx) + len_issuer_settings,
+	if ( sign( sign_data, EVP_MD_CTX_size(mdctx) + len_issuer_settings,
 			private_nn,
 			signature,
 			&len_signature) ==0) {
@@ -262,16 +262,17 @@ Issuer* initIssuer(int length_key_chain, char *filename, char *exec, TSS_HCONTEX
 			dump_byte_array(EVP_MD_size( EVP_sha1()),
 			signature));
 	// TODO sign the complete public key of TPM compatible Issuer key
-/*	EVP_DigestInit_ex(&mdctx, DAA_PARAM_get_message_digest(), NULL);
-	EVP_DigestUpdate(&mdctx, digest_n0, EVP_MD_CTX_size(&mdctx));
+/*	EVP_DigestInit_ex(mdctx, DAA_PARAM_get_message_digest(), NULL);
+	EVP_DigestUpdate(mdctx, digest_n0, EVP_MD_CTX_size(mdctx));
 	pk_encoded = encoded_DAA_PK_internal( &pk_encodedLength, issuer->pk);
-	EVP_DigestUpdate(&mdctx,  pk_encoded, pk_encodedLength);
-	EVP_DigestFinal(&mdctx, , NULL);
+	EVP_DigestUpdate(mdctx,  pk_encoded, pk_encodedLength);
+	EVP_DigestFinal(mdctx, , NULL);
 	signature = (BYTE *)malloc( EVP_MD_size( EVP_sha1()));
-	if (sign( sign_data, EVP_MD_CTX_size(&mdctx) + len_issuer_settings,
+	if (sign( sign_data, EVP_MD_CTX_size(mdctx) + len_issuer_settings,
 		private_nn, signature, &len_signature) !=0) goto close;
 */
 close:
+	EVP_MD_CTX_destroy(mdctx);
 	free( digest_n0);
 	free( sign_data);
 	return issuer;
