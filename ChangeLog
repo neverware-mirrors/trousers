@@ -1,3 +1,11 @@
+* TROUSERS_0_3_14
+- Changes to support OpenSSL 1.1.0
+- Removed some warnings for proper builds
+- Changes to allow building on OS X
+- Fixed memory leaks
+- Fixed failure to recognize connections from localhost over IPv6
+- Fixed for an exploitable local denial of service in tcsd
+
 * TROUSERS_0_3_13
 - Changed exported functions which had a name too common, to avoid collision
 - Assessed daemon security using manual techniques and coverit
