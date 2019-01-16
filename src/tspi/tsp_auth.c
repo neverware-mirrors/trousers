@@ -1221,17 +1221,17 @@ Transport_TerminateHandle(TSS_HCONTEXT tspContext, /* in */
 	}
 
 	*handles = handle;
-    handles_track = handles;
+	handles_track = handles;
 
-    // Since the call tree of this function can possibly alloc memory 
-    // (check RPC_ExecuteTransport_TP function), its better to keep track of
-    // the handle.
+	// Since the call tree of this function can possibly alloc memory
+	// (check RPC_ExecuteTransport_TP function), its better to keep track of
+	// the handle.
 	result = obj_context_transport_execute(tspContext, TPM_ORD_Terminate_Handle, 0, NULL,
 					       NULL, &handlesLen, &handles, NULL, NULL, NULL, NULL);
 
-	free(handles);
-    handles = NULL;
-    free(handles_track);
+	if (handles != handles_track)
+		free(handles);
+	free(handles_track);
 
 	return result;
 }
