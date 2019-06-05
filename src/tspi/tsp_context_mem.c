@@ -258,8 +258,10 @@ free_tspi(TSS_HCONTEXT tspContext, void *memPointer)
 }
 
 /* definition for a memset that cannot be optimized away */
-void * __no_optimize
+void *
 __tspi_memset(void *s, int c, size_t n)
 {
-	return memset(s, c, n);
+	memset(s, c, n);
+	asm volatile("" ::: "memory");
+	return s;
 }

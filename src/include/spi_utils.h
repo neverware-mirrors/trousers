@@ -53,7 +53,7 @@ MUTEX_DECLARE_EXTERN(mem_cache_lock);
 void *calloc_tspi(TSS_HCONTEXT, UINT32);
 TSS_RESULT free_tspi(TSS_HCONTEXT, void *);
 TSS_RESULT __tspi_add_mem_entry(TSS_HCONTEXT, void *);
-void * __no_optimize __tspi_memset(void *, int, size_t);
+void * __tspi_memset(void *, int, size_t);
 
 /* secrets.c */
 
