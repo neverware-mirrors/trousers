@@ -164,10 +164,4 @@ TSS_RESULT tcsd_thread_create(int, char *);
 void	   *tcsd_thread_run(void *);
 void	   thread_signal_init();
 
-/* signal handling */
-#ifndef __APPLE__
-struct sigaction tcsd_sa_int;
-struct sigaction tcsd_sa_chld;
-#endif
-
 #endif
