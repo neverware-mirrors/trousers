@@ -743,7 +743,7 @@ conf_file_init(struct tcsd_config *conf)
 #ifndef SOLARIS
 	struct group *grp;
 	struct passwd *pw;
-	mode_t mode = (S_IRUSR|S_IWUSR);
+	mode_t mode = (S_IRUSR|S_IWUSR|S_IRGRP);
 #endif /* SOLARIS */
 	TSS_RESULT result;
 
@@ -798,15 +798,15 @@ conf_file_init(struct tcsd_config *conf)
 	}
 
 	/* make sure user/group TSS owns the conf file */
-	if (pw->pw_uid != stat_buf.st_uid || grp->gr_gid != stat_buf.st_gid) {
+	if (stat_buf.st_uid != 0 || grp->gr_gid != stat_buf.st_gid) {
 		LogError("TCSD config file (%s) must be user/group %s/%s", tcsd_config_file,
-				TSS_USER_NAME, TSS_GROUP_NAME);
+				"root", TSS_GROUP_NAME);
 		return TCSERR(TSS_E_INTERNAL_ERROR);
 	}
 
-	/* make sure only the tss user can manipulate the config file */
+	/* make sure only the tss user can read (but not manipulate) the config file */
 	if (((stat_buf.st_mode & 0777) ^ mode) != 0) {
-		LogError("TCSD config file (%s) must be mode 0600", tcsd_config_file);
+		LogError("TCSD config file (%s) must be mode 0640", tcsd_config_file);
 		return TCSERR(TSS_E_INTERNAL_ERROR);
 	}
 #endif /* SOLARIS */

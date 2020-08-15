@@ -72,7 +72,7 @@ get_file()
 	}
 
 	/* open and lock the file */
-	system_ps_fd = open(tcsd_options.system_ps_file, O_CREAT|O_RDWR, 0600);
+	system_ps_fd = open(tcsd_options.system_ps_file, O_CREAT|O_RDWR|O_NOFOLLOW, 0600);
 	if (system_ps_fd < 0) {
 		LogError("system PS: open() of %s failed: %s",
 				tcsd_options.system_ps_file, strerror(errno));

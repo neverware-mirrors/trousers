@@ -473,6 +473,7 @@ main(int argc, char **argv)
 		}
 		return TCSERR(TSS_E_INTERNAL_ERROR);
 	}
+	setgid(pwd->pw_gid);
 	setuid(pwd->pw_uid);
 #endif
 #endif
