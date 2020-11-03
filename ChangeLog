@@ -1,3 +1,10 @@
+* TROUSERS_0_3_15
+- Corrected mutliple security issues that existed if the tcsd is started by
+root instead of the tss user.  CVE-2020-24332, CVE-2020-24330, CVE-2020-24331
+- Replaced use of _no_optimize with asm memory barrier
+- Fixed multiple potential instances of use after free memory handling
+- Removed unused global variables which caused build issue on some distros
+
 * TROUSERS_0_3_14
 - Changes to support OpenSSL 1.1.0
 - Removed some warnings for proper builds
